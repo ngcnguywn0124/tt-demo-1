@@ -22,9 +22,20 @@ public interface BlogRepository extends JpaRepository<Blog, Long> {
     List<Blog> findAllByStatusWithRelations(@Param("status") BlogStatus status);
 
     @EntityGraph(attributePaths = {"author", "author.role", "category", "tags"})
+    @Query("select distinct b from Blog b where b.author.username = :username order by b.createdAt desc")
+    List<Blog> findAllByAuthorUsernameWithRelations(@Param("username") String username);
+
+    @EntityGraph(attributePaths = {"author", "author.role", "category", "tags"})
     @Query("select distinct b from Blog b where b.id = :id")
     Optional<Blog> findByIdWithRelations(@Param("id") Long id);
 
     @EntityGraph(attributePaths = {"author", "author.role", "category", "tags"})
+    @Query("select distinct b from Blog b where b.id = :id and b.status = :status")
+    Optional<Blog> findByIdAndStatusWithRelations(@Param("id") Long id, @Param("status") BlogStatus status);
+
+    @EntityGraph(attributePaths = {"author", "author.role", "category", "tags"})
     Optional<Blog> findBySlug(String slug);
+
+    @EntityGraph(attributePaths = {"author", "author.role", "category", "tags"})
+    Optional<Blog> findBySlugAndStatus(String slug, BlogStatus status);
 }

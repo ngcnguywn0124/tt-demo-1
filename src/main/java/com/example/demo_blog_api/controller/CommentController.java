@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -45,17 +46,19 @@ public class CommentController {
     @PostMapping("/blogs/{blogId}/comments")
     public ResponseEntity<CommentResponse> create(
             @PathVariable Long blogId,
-            @Valid @RequestBody CommentRequest request
+            @Valid @RequestBody CommentRequest request,
+            Authentication authentication
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(commentService.create(blogId, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(commentService.create(blogId, request, authentication.getName()));
     }
 
     @PutMapping("/comments/{id}")
     public ResponseEntity<CommentResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody CommentUpdateRequest request
+            @Valid @RequestBody CommentUpdateRequest request,
+            Authentication authentication
     ) {
-        return ResponseEntity.ok(commentService.update(id, request.content()));
+        return ResponseEntity.ok(commentService.update(id, request.content(), authentication.getName(), isAdmin(authentication)));
     }
 
     @PatchMapping("/comments/{id}/status")
@@ -67,8 +70,13 @@ public class CommentController {
     }
 
     @DeleteMapping("/comments/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        commentService.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id, Authentication authentication) {
+        commentService.delete(id, authentication.getName(), isAdmin(authentication));
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
     }
 }

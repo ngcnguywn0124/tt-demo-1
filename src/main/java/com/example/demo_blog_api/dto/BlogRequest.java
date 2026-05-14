@@ -1,6 +1,5 @@
 package com.example.demo_blog_api.dto;
 
-import com.example.demo_blog_api.entity.BlogStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -19,13 +18,9 @@ public record BlogRequest(
         @NotBlank(message = "Content is required")
         String content,
 
-        @NotNull(message = "Author id is required")
-        Long authorId,
-
         @NotNull(message = "Category id is required")
         Long categoryId,
 
-        Set<Long> tagIds,
-        BlogStatus status
+        Set<Long> tagIds
 ) {
 }

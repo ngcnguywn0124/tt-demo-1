@@ -16,6 +16,7 @@ import com.example.demo_blog_api.repository.UserRepository;
 import com.example.demo_blog_api.service.BlogService;
 import com.github.slugify.Slugify;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,33 +51,45 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     @Transactional(readOnly = true)
-    public BlogResponse getById(Long id) {
-        return blogRepository.findByIdWithRelations(id)
+    public List<BlogResponse> getMyBlogs(String username) {
+        return blogRepository.findAllByAuthorUsernameWithRelations(username).stream()
+                .map(ApiMapper::toBlogResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BlogResponse getPublishedById(Long id) {
+        return blogRepository.findByIdAndStatusWithRelations(id, BlogStatus.PUBLISHED)
                 .map(ApiMapper::toBlogResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Blog not found with id: " + id));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public BlogResponse getBySlug(String slug) {
-        return blogRepository.findBySlug(slug)
+    public BlogResponse getPublishedBySlug(String slug) {
+        return blogRepository.findBySlugAndStatus(slug, BlogStatus.PUBLISHED)
                 .map(ApiMapper::toBlogResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Blog not found with slug: " + slug));
     }
 
     @Override
     @Transactional
-    public BlogResponse create(BlogRequest request) {
+    public BlogResponse create(BlogRequest request, String username) {
         Blog blog = new Blog();
+        User author = findUserByUsername(username);
         applyRequest(blog, request, null);
+        blog.setAuthor(author);
+        blog.setStatus(BlogStatus.DRAFT);
         return ApiMapper.toBlogResponse(blogRepository.save(blog));
     }
 
     @Override
     @Transactional
-    public BlogResponse update(Long id, BlogRequest request) {
+    public BlogResponse update(Long id, BlogRequest request, String username, boolean admin) {
         Blog blog = blogRepository.findByIdWithRelations(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Blog not found with id: " + id));
+        assertBlogOwnerOrAdmin(blog, username, admin);
         applyRequest(blog, request, id);
         return ApiMapper.toBlogResponse(blogRepository.save(blog));
     }
@@ -92,16 +105,14 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     @Transactional
-    public void delete(Long id) {
-        if (!blogRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Blog not found with id: " + id);
-        }
-        blogRepository.deleteById(id);
+    public void delete(Long id, String username, boolean admin) {
+        Blog blog = blogRepository.findByIdWithRelations(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Blog not found with id: " + id));
+        assertBlogOwnerOrAdmin(blog, username, admin);
+        blogRepository.delete(blog);
     }
 
     private void applyRequest(Blog blog, BlogRequest request, Long currentId) {
-        User author = userRepository.findById(request.authorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Author not found with id: " + request.authorId()));
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.categoryId()));
 
@@ -109,9 +120,7 @@ public class BlogServiceImpl implements BlogService {
         blog.setSlug(uniqueSlug(request.title(), currentId));
         blog.setSummary(request.summary().trim());
         blog.setContent(request.content());
-        blog.setAuthor(author);
         blog.setCategory(category);
-        blog.setStatus(request.status() == null ? BlogStatus.DRAFT : request.status());
         blog.setTags(resolveTags(request.tagIds()));
     }
 
@@ -140,5 +149,19 @@ public class BlogServiceImpl implements BlogService {
             index++;
         }
         return candidate;
+    }
+
+    private User findUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+    }
+
+    private void assertBlogOwnerOrAdmin(Blog blog, String username, boolean admin) {
+        if (admin) {
+            return;
+        }
+        if (!blog.getAuthor().getUsername().equals(username)) {
+            throw new AccessDeniedException("You can only modify your own blog");
+        }
     }
 }

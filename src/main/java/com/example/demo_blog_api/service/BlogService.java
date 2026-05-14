@@ -9,10 +9,11 @@ import java.util.List;
 public interface BlogService {
     List<BlogResponse> getPublishedBlogs();
     List<BlogResponse> getAllBlogs();
-    BlogResponse getById(Long id);
-    BlogResponse getBySlug(String slug);
-    BlogResponse create(BlogRequest request);
-    BlogResponse update(Long id, BlogRequest request);
+    List<BlogResponse> getMyBlogs(String username);
+    BlogResponse getPublishedById(Long id);
+    BlogResponse getPublishedBySlug(String slug);
+    BlogResponse create(BlogRequest request, String username);
+    BlogResponse update(Long id, BlogRequest request, String username, boolean admin);
     BlogResponse updateStatus(Long id, BlogStatus status);
-    void delete(Long id);
+    void delete(Long id, String username, boolean admin);
 }

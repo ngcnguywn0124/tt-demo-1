@@ -20,4 +20,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @EntityGraph(attributePaths = {"user", "user.role", "blog"})
     @Query("select c from Comment c where c.id = :id")
     Optional<Comment> findByIdWithRelations(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = {"user", "user.role", "blog", "blog.author"})
+    @Query("select c from Comment c where c.id = :id")
+    Optional<Comment> findByIdWithBlogAuthor(@Param("id") Long id);
 }

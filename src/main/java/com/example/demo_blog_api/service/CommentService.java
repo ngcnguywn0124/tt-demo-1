@@ -10,8 +10,8 @@ public interface CommentService {
     List<CommentResponse> getVisibleByBlog(Long blogId);
     List<CommentResponse> getAllByBlog(Long blogId);
     CommentResponse getById(Long id);
-    CommentResponse create(Long blogId, CommentRequest request);
-    CommentResponse update(Long id, String content);
+    CommentResponse create(Long blogId, CommentRequest request, String username);
+    CommentResponse update(Long id, String content, String username, boolean admin);
     CommentResponse updateStatus(Long id, CommentStatus status);
-    void delete(Long id);
+    void delete(Long id, String username, boolean admin);
 }

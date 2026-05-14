@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -36,24 +37,33 @@ public class BlogController {
         return ResponseEntity.ok(blogService.getAllBlogs());
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<List<BlogResponse>> getMyBlogs(Authentication authentication) {
+        return ResponseEntity.ok(blogService.getMyBlogs(authentication.getName()));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<BlogResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(blogService.getById(id));
+        return ResponseEntity.ok(blogService.getPublishedById(id));
     }
 
     @GetMapping("/slug/{slug}")
     public ResponseEntity<BlogResponse> getBySlug(@PathVariable String slug) {
-        return ResponseEntity.ok(blogService.getBySlug(slug));
+        return ResponseEntity.ok(blogService.getPublishedBySlug(slug));
     }
 
     @PostMapping
-    public ResponseEntity<BlogResponse> create(@Valid @RequestBody BlogRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(blogService.create(request));
+    public ResponseEntity<BlogResponse> create(@Valid @RequestBody BlogRequest request, Authentication authentication) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(blogService.create(request, authentication.getName()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BlogResponse> update(@PathVariable Long id, @Valid @RequestBody BlogRequest request) {
-        return ResponseEntity.ok(blogService.update(id, request));
+    public ResponseEntity<BlogResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody BlogRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(blogService.update(id, request, authentication.getName(), isAdmin(authentication)));
     }
 
     @PatchMapping("/{id}/status")
@@ -65,8 +75,13 @@ public class BlogController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        blogService.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id, Authentication authentication) {
+        blogService.delete(id, authentication.getName(), isAdmin(authentication));
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
     }
 }
