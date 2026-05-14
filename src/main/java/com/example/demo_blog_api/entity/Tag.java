@@ -1,6 +1,11 @@
 package com.example.demo_blog_api.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -12,12 +17,14 @@ import lombok.Setter;
 @Getter
 public class Tag {
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotBlank(message = "Tên không được để trống")
-    @Size(max = 100, message = "Tên không được quá 100 ký tự")
-    @Column(unique = true, columnDefinition = "varchar(100)")
+
+    @NotBlank(message = "Name is required")
+    @Size(max = 100, message = "Name must not exceed 100 characters")
+    @Column(nullable = false, unique = true, columnDefinition = "varchar(100)")
     private String name;
 
+    @Column(nullable = false, unique = true, columnDefinition = "varchar(100)")
     private String slug;
 }

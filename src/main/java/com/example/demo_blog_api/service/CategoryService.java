@@ -1,15 +1,15 @@
 package com.example.demo_blog_api.service;
 
-import com.example.demo_blog_api.entity.Category;
+import com.example.demo_blog_api.dto.CategoryRequest;
+import com.example.demo_blog_api.dto.CategoryResponse;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface CategoryService {
-    List<Category> findAll();
-    Optional<Category> findById(Long id);
-    Category save(Category category);
-    Category update(Category category, Long id);
+    List<CategoryResponse> findAll();
+    CategoryResponse findById(Long id);
+    CategoryResponse save(CategoryRequest request);
+    CategoryResponse update(CategoryRequest request, Long id);
     void delete(Long id);
-    Optional<Category> findByName(String name);
+    List<CategoryResponse> searchByName(String name);
 }
