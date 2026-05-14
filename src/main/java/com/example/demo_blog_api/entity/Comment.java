@@ -8,28 +8,27 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "comments")
 @Getter @Setter
-public class User {
+public class Comment {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     private Long id;
-    @Column(nullable = false, unique = true)
-    private String username;
-    @Column(nullable = false, unique = true)
-    private String email;
-    @Column(nullable = false)
-    private String password;
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
+
+    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User user;
+
+    @JoinColumn(name = "blog_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Blog blog;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String content;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private UserStatus status;
-
-    @JoinColumn(name = "role_id", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Role role;
-
+    private CommentStatus status = CommentStatus.VISIBLE;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

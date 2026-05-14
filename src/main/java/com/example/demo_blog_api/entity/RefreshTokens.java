@@ -1,6 +1,5 @@
 package com.example.demo_blog_api.entity;
 
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,32 +7,37 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
-@Getter @Setter
-public class User {
+@Table(name = "refresh_tokens")
+@Getter
+@Setter
+public class RefreshTokens {
+
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // Liên kết với user
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    // Refresh token
     @Column(nullable = false, unique = true)
-    private String username;
-    @Column(nullable = false, unique = true)
-    private String email;
+    private String token;
+
+    // Thời gian hết hạn
+    @Column(name = "expiry_time", nullable = false)
+    private LocalDateTime expiryTime;
+
+    // Token đã bị thu hồi hay chưa
     @Column(nullable = false)
-    private String password;
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private UserStatus status;
+    private Boolean revoked = false;
 
-    @JoinColumn(name = "role_id", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Role role;
-
-
+    // Thời gian tạo
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    // Thời gian cập nhật
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
@@ -47,5 +51,4 @@ public class User {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
 }
